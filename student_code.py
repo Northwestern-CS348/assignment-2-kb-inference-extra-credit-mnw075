@@ -129,7 +129,41 @@ class KnowledgeBase(object):
         ####################################################
         # Implementation goes here
         # Not required for the extra credit assignment
-
+    
+    def kb_explain_helper(self, fact_or_rule, count):
+        if isinstance(fact_or_rule, Fact):
+            fact = self._get_fact(fact_or_rule)
+            if not fact:
+                return("Fact is not in the KB")
+            else:
+                rep = 'fact: ' + '(' + fact.statement.predicate + ' ' + str(fact.statement.terms[0]) + ' ' + str(fact.statement.terms[1]) + ')'
+                if fact.asserted:
+                    return('  '*(count) + rep + ' ASSERTED\n')
+                else:
+                    asd = '  '*(count) + rep + '\n'
+                    for pair in fact.supported_by:
+                        asd += '  '*(count+1) + 'SUPPORTED BY\n' + self.kb_explain_helper(pair[0], count + 2) + self.kb_explain_helper(pair[1], count + 2)
+                    return(asd)                    
+        elif isinstance(fact_or_rule, Rule):
+            rule = self._get_rule(fact_or_rule)
+            if not rule:
+                return ("Rule is not in the KB")
+            else:                
+                lhs = 'rule: ' + '('
+                for statement in rule.lhs[:-1]:
+                    lhs += '(' + statement.predicate + ' ' + str(statement.terms[0]) + ' ' +  str(statement.terms[1]) + '), '
+                lhs += '(' + rule.lhs[-1].predicate + ' ' + str(rule.lhs[-1].terms[0]) + ' ' +  str(rule.lhs[-1].terms[1]) + '))'
+                rhs = '(' + rule.rhs.predicate + ' ' + str(rule.rhs.terms[0]) +  ' ' + str(rule.rhs.terms[1]) + ')'
+                if rule.asserted:
+                    return('  '*(count) + lhs + ' -> ' + rhs + ' ASSERTED\n')
+                else:
+                    asd = '  '*(count) + lhs + ' -> ' + rhs + '\n'
+                    for pair in rule.supported_by:
+                        asd += '  '*(count+1) + 'SUPPORTED BY\n' + self.kb_explain_helper(pair[0], count + 2) + (self.kb_explain_helper(pair[1], count + 2))
+                    return(asd)  
+        else:
+            return
+    
     def kb_explain(self, fact_or_rule):
         """
         Explain where the fact or rule comes from
@@ -142,7 +176,9 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
-
+        count = 0
+        return(self.kb_explain_helper(fact_or_rule, count))
+        
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
